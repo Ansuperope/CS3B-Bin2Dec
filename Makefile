@@ -12,7 +12,7 @@
 # Authors: Kaveh Zare, modified and documented by Matthew Reese
 # Last Modified: 2/12/2025
 
-MAIN := main
+MAIN := Bin2Dec
 EXE := $(MAIN).out  # Executable name
 #      ^^^^^^--- Change this to the name of the lab executable / library archive
 
@@ -67,10 +67,9 @@ gdb:
 save:
 	git add .
 
-# build docker
-build:
-	docker compose up -d --build
+# Docker targets
+docker-build:
+	docker build -t arm64-dev .
 
-# run docker
 docker:
-	docker compose run arm64-dev bash
+	docker run --rm -it -v $(PWD):/workspace -w /workspace arm64-dev
