@@ -38,11 +38,11 @@ getstring:
 	.text  // code section 
 	// -----------------------------------------------------------------
 	// SAVE VARIABLES FROM MAIN
-	//	X3: X0, string
-	//	X4: X1, MAX_LENGTH
+	//	X3: X0, input string
+	//	X4: X1, input lenth
 	// -----------------------------------------------------------------
 	MOV X3, X0			// X3 = X0, variable to store string
-	MOV X4, X1			// X4 = X1, MAX_LENGTH
+	MOV X4, X1			// X4 = X1, input lenght
 
 	// -----------------------------------------------------------------
 	// READ KEYBOARD
@@ -55,91 +55,26 @@ getstring:
 
 	// If input not valid exit (overflow)
 	CMP  X0, XZR
-	B.LT errorEnd
+	B.GE done     // jump if valid
 
 	// -----------------------------------------------------------------
-	// PROCESS INPUT
-    //  X0: number of characters read
-	//	X3: string
-	//	X4: MAX_LENGTH
-	//	X5: counter
-	//  X6: current character
+	// ERROR: TERMINATE PROGRAM
 	// -----------------------------------------------------------------
-	// INITALIZATIONS
-	MOV X5, #0			// counter = 0
-            
-forEachChar:
-    // GET CURRENT CHARACTER
-    LDRB W6, [X3, X5] 	// X6 = string[counter]
-
-	// -----------------------------------------------------------------
-	// CHECK IF COUNTER == NUMBER OF CHARACTERS READ (X0)
-	// -----------------------------------------------------------------
-	CMP  X5, X0		// counter == num of character read (X0), exit
-	B.EQ output
-
-    // -----------------------------------------------------------------
-	// CHECK IF COUNTER == IN_LEN
-	// -----------------------------------------------------------------
-	CMP  X5, X4		// counter == IN_LEN, exit
-	B.EQ output
-
-    // -----------------------------------------------------------------
-	// CHECK IF CHAR == 'q' or CHAR == 'Q' - TERMINATE PROGRAM
-	// -----------------------------------------------------------------
-    // LOWERCASE
-    CMP  W6, #'q'
-    B.EQ errorEnd
-
-    // UPPERCASE
-    CMP W6, #'Q'
-    B.EQ errorEnd
-
-    // -----------------------------------------------------------------
-	// CHECK IF CHAR == 'c' or CHAR == 'C' - CLEAR BINARY STRING
-	// -----------------------------------------------------------------
-    // LOWERCASE
-    CMP  W6, #'c'
-    B.EQ errorEnd
-
-    // UPPERCASE
-    CMP W6, #'C'
-    B.EQ errorEnd
-	// -----------------------------------------------------------------
-	// LOOP AGAIN
-	// -----------------------------------------------------------------
-	ADD X5, X5, #1	// X5++
-	B forEachChar
-
-	// -----------------------------------------------------------------
-	// OUTPUT INPUT
-	//	X3: X0, string
-	//	X4: X1, MAX_LENGTH
-	//	X5: counter
-	// -----------------------------------------------------------------
-output: 
-	STRB WZR, [X3, X5]  // X0[counter] = \0
-
-	MOV X0, STDOUT		// tells program we will output
-	MOV X1, X3			// string to output
-	MOV X2, X5			// number of characters to output
-	MOV X8, SYS_write	// Linux write() sys call
-	SVC 0				// call Linux to execute commands
-
-    // terminate program, encoun
-
-    // -----------------------------------------------------------------
-    // END PROGRAM - ENCOUNTER 'Q' OR ERROR
-    // -----------------------------------------------------------------
-errorEnd:
-    MOV X0, #0			// set return code to 0, all good 
+	MOV X0, #1			// set return code to 0, all good 
 	MOV X8, #SYS_exit	// set exit() supervisor call code 
-	SVC 0				// call Linux to exit
+	SVC 0				// call Linux to exit 
 
     // -----------------------------------------------------------------
     // RETURN TO MAIN - NO ISSUES
     // -----------------------------------------------------------------
 done:
+	MOV X4, X0
+
+	MOV X0, STDOUT		// tells program we will output
+	MOV X1, X3			// string to output
+	MOV X2, X4			// number of characters to output
+	MOV X8, SYS_write	// Linux write() sys call
+	SVC 0				// call Linux to execute commands
 	RET     // return to main
 
 .end	// end of program, optional but good practice 
