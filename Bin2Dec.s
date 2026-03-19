@@ -101,22 +101,22 @@ forInString:
 	// -----------------------------------------------------------------
     // LOWERCASE
     CMP  W5, #'q'
-    B.EQ done
+    B.EQ terminate
 
     // UPPERCASE
     CMP W5, #'Q'
-    B.EQ done
+    B.EQ terminate
 
 	// -----------------------------------------------------------------
 	// CLEAR BINARY STRING: CHECK IF CHAR == 'c' or CHAR == 'C'
 	// -----------------------------------------------------------------
     // LOWERCASE
     CMP  W5, #'c'
-    B.EQ done
+    B.EQ clearBin
 
     // UPPERCASE
     CMP W5, #'C'
-    B.EQ done
+    B.EQ clearBin
 	
 	// -----------------------------------------------------------------
 	// CHECK IF CHAR == 1 or CHAR == 0 - ENTER TO BINARY STRING
@@ -133,6 +133,35 @@ forInString:
 	// LOOP AGAIN: ELSE / DO NOTHING
 	// -----------------------------------------------------------------	
 	B forInString
+
+	// -----------------------------------------------------------------
+	// 	CLEAR BINARY
+	//  X0: number of characters read
+	//	X1: input string 
+    //  X2: binary string
+    //  X3: input counter
+    //	X4: binary counter
+	//	X5 / W5: current input character
+    //  X6 / W6: current binary character
+	// -----------------------------------------------------------------
+clearBin:
+	// GET CURRENT CHARACTER
+	STRB W6, [X2, X4]	// W6 = binString[binCounter]
+
+	// EMPTY CHARACTER
+	MOV W6, #0			// W6 = 0 (cleared)
+
+	// -----------------------------------------------------------------
+	// RETURN TO MAIN LOOP: CHECK IF WE HAVE CLEARED ALL VALUES
+	// -----------------------------------------------------------------
+	CMP X4, #0			// binCounter == 0
+	B.EQ forInString
+	
+	// DECREMENT
+	SUB X4, X4, #1		// binCounter--
+
+	// LOOP AGAIN, KEEP CLEARING
+	B clearBin
 
 	// -----------------------------------------------------------------
 	// 	ADD BINARY - 1 OR 0 INPUT
@@ -179,11 +208,11 @@ output:
 	MOV X0, X2
 	MOV X1, BIN_LEN
 	BL putstring
-	
+
 	// -----------------------------------------------------------------
 	// TERMINATE PROGRAM
 	// -----------------------------------------------------------------
-done:
+terminate:
 	MOV X0, #0			// set return code to 0, all good 
 	MOV X8, #SYS_exit	// set exit() supervisor call code 
 	SVC 0				// call Linux to exit 
