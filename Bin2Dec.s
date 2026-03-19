@@ -11,11 +11,20 @@
 // ---------------------------------------------------------------------
 // 	PSUEDOCODE:
 // 1. (getstring.s) Get user input
-// 2. (getstring.s) Process User input
-// 	a. get rid of non binary values (only 1 and 0 should remain)
-// 	b. make it 16 bits long
-//		i. if user entered less than 16 make the remaining 0
-// 		ii. replace null with ‘\0’
+// 
+// 2. Process User input, check each input
+//	a. check if user input 'q' or 'Q'
+//		i. terminate program
+//	b. check if user input 'c' or 'C'
+//		i. clear binary string
+//		ii. loop again
+//	c. check if user input '1' or '0'
+//		i. add to binary string
+//	d. ignore everything else / do nothing
+//
+// 3. Make binary string 16 bits long
+// 	 a. replace null with ‘\0’
+//
 // 3. (putstring.s) Output binary
 // 4. (putstring.s) Output arrow ->
 // 5. Do 2s complement if needed
@@ -30,6 +39,7 @@
 
 // functions
 .extern getstring	// user input
+.extern putstring	// output text to terminal
 
 _start: 
 	// SYSTEM
@@ -44,7 +54,7 @@ _start:
 	.text  // code section
 
 	// -----------------------------------------------------------------
-	// GET USER INPUT
+	// 1. GET USER INPUT
 	// -----------------------------------------------------------------
 	LDR X0, =szInBuffer		// store input string
 	MOV X1, IN_LEN			// input max length
@@ -68,9 +78,9 @@ _start:
     MOV X4, #0          // binary string counter = 0
 
 forInString:
-	// GET CURRENT CHARACTER
+	// INCREMENT COUNTER
 	ADD  X3, X3, #1	// inCounter++ (starts with 0, b/c intalized to -1)
-	
+
 	// -----------------------------------------------------------------
 	// EXIT: CHECK IF COUNTER == NUMBER OF CHARACTERS READ (X0)
 	// -----------------------------------------------------------------
@@ -83,7 +93,7 @@ forInString:
 	CMP  X3, IN_LEN		// inCounter == IN_LEN, exit
 	B.EQ output
 
-
+	// GET CURRENT CHARACTER
     LDRB W5, [X1, X3] 	// X6 = inString[inCounter]
 
 	// -----------------------------------------------------------------
@@ -156,21 +166,20 @@ addBin:
     // JUMP BACK TO INPUT LOOP
     B forInString
 
-
 	// -----------------------------------------------------------------
-	// OUTPUT INPUT
-	//  X2: binary string
-    //  X3: input counter
+	// OUTPUT BINARY
+	//  X0 <- X2: string to output
+	//	X1 <- X4: length of output
 	// -----------------------------------------------------------------
 output: 
+	// MAKE LAST INDEX OF BINARY STRING '0'
 	STRB WZR, [X2, X4]  // X0[16] = \0
-
-	MOV X0, STDOUT			// tells program we will output
-	LDR X1, =szBinBuffer	// string to output
-	MOV X2, BIN_LEN			// number of characters to output
-	MOV X8, SYS_write		// Linux write() sys call
-	SVC 0					// call Linux to execute commands
-
+	
+	// OUTPUT
+	MOV X0, X2
+	MOV X1, BIN_LEN
+	BL putstring
+	
 	// -----------------------------------------------------------------
 	// TERMINATE PROGRAM
 	// -----------------------------------------------------------------
