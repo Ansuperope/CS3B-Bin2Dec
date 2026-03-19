@@ -204,9 +204,14 @@ output:
 	// MAKE LAST INDEX OF BINARY STRING '0'
 	STRB WZR, [X2, X4]  // X0[16] = \0
 	
-	// OUTPUT
+	// OUTPUT BINARY
 	MOV X0, X2
 	MOV X1, BIN_LEN
+	BL putstring
+
+	// OUTPUT ARROW
+	LDR X0, =sArrow
+	MOV X1, #4
 	BL putstring
 
 	// -----------------------------------------------------------------
@@ -220,5 +225,6 @@ terminate:
 	.data	// data section
 szInBuffer: 	.space 	IN_LEN		// holds user input, includes null
 szBinBuffer:	.space	BIN_LEN		// holds binary string, includes null
+sArrow:			.ascii 	" -> "
 
 .end	// end of program, optional but good practice 
