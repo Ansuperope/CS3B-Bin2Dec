@@ -178,7 +178,7 @@ addBin:
 	// EXIT: CHECK IF AT MAX - binCounter < 16
 	// -----------------------------------------------------------------
     CMP X4, BIN_LEN - 1            // 15 because start at 0
-    B.EQ forInString
+    B.EQ output
 
 	// -----------------------------------------------------------------
     // NOT AT MAX, ADD TO STRING
