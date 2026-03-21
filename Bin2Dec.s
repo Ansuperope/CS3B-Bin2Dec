@@ -1,13 +1,6 @@
 // ---------------------------------------------------------------------
 // Aspen Cristobal & Sophia
 // CS3b - Bin2 Dec
-// 3/24/2026
-// ---------------------------------------------------------------------
-// 	PURPOSE:
-// LOREM
-// ---------------------------------------------------------------------
-//	VARAIBLES:
-// LOREM
 // ---------------------------------------------------------------------
 // 	PSUEDOCODE:
 // 1. (getstring.s) Get user input
@@ -35,196 +28,235 @@
 // 6. (Bin2dec.s) Convert binary to decimal
 // 7. (putstring.s) Output decimal
 // ---------------------------------------------------------------------
-.global _start	// Provide program starting address 
+.global _start
 
 // functions
-.extern getstring	// user input
-.extern putstring	// output text to terminal
+.extern getstring
+.extern putstring
+.extern int2cstr
 
-_start: 
-	// SYSTEM
-	.EQU SYS_exit,  93	// exit() supervisor call code
-	.EQU SYS_write, 64	// Linux write()
-	.EQU STDOUT,	1	// standard output
-    
-	// CONSTANTS
-	.EQU IN_LEN,	64	// max input length
-	.EQU BIN_LEN,	17	// max binary string length
+_start:
+    // ---------------------------------------------------------------
+    // SYSTEM CONSTANTS
+    // ---------------------------------------------------------------
+    .EQU SYS_exit,  93
+    .EQU STDOUT,    1
 
-	.text  // code section
+    // ---------------------------------------------------------------
+    // PROGRAM CONSTANTS
+    // ---------------------------------------------------------------
+    .EQU IN_LEN,    64      // max input length
+    .EQU BIN_LEN,   17      // 16 bits + null
 
-	// -----------------------------------------------------------------
-	// 1. GET USER INPUT
-	// -----------------------------------------------------------------
-	LDR X0, =szInBuffer		// store input string
-	MOV X1, IN_LEN			// input max length
-	BL  getstring
+    .text
 
-	// -----------------------------------------------------------------
-	// CREATE BINARY STRING
-	//  X0: number of characters read
-	//	X1: input string 
-    //  X2: binary string
-    //  X3: input counter
-    //	X4: biary counter
-	//	X5 / W5: current input character
-    //  X6 / W6: current binary character
-	// -----------------------------------------------------------------
-	// INITALIZATIONS
-	LDR X1, =szInBuffer
-	LDR X2, =szBinBuffer
+    // ---------------------------------------------------------------
+    // 1. GET USER INPUT
+    // X0 = buffer pointer
+    // X1 = max length
+    // returns:
+    // X0 = number of characters read
+    // ---------------------------------------------------------------
+    LDR X0, =szInBuffer
+    MOV X1, IN_LEN
+    BL  getstring
 
-	MOV X3, #-1			// input string counter = -1, doing do while loop
-    MOV X4, #0          // binary string counter = 0
+    // ---------------------------------------------------------------
+    // INITIALIZE REGISTERS
+    // X0 = number of chars read
+    // X1 = input buffer pointer
+    // X2 = output binary string buffer
+    // X3 = input index
+    // X4 = bit counter
+    // X5 = current char
+    // X6 = current bit (0 or 1)
+    // X7 = FINAL INTEGER VALUE (IMPORTANT)
+    // ---------------------------------------------------------------
+    LDR X1, =szInBuffer
+    LDR X2, =szBinBuffer
 
+    MOV X3, #0          // input index = 0
+    MOV X4, #0          // bit count = 0
+    MOV X7, #0          // final integer = 0
+
+// ---------------------------------------------------------------
+// LOOP THROUGH INPUT STRING
+// ---------------------------------------------------------------
 forInString:
-	// INCREMENT COUNTER
-	ADD  X3, X3, #1	// inCounter++ (starts with 0, b/c intalized to -1)
 
-	// -----------------------------------------------------------------
-	// EXIT: CHECK IF COUNTER == NUMBER OF CHARACTERS READ (X0)
-	// -----------------------------------------------------------------
-	CMP  X3, X0		// inCounter == num of character read (X0), exit
-	B.EQ output
+    // check if reached end of input
+    CMP X3, X0
+    B.EQ signExtend
 
-    // -----------------------------------------------------------------
-	// EXIT: CHECK IF COUNTER == IN_LEN
-	// -----------------------------------------------------------------
-	CMP  X3, IN_LEN		// inCounter == IN_LEN, exit
-	B.EQ output
+    // check max input length
+    CMP X3, IN_LEN
+    B.EQ signExtend
 
-	// GET CURRENT CHARACTER
-    LDRB W5, [X1, X3] 	// X6 = inString[inCounter]
+    // load current character
+    LDRB W5, [X1, X3]
 
-	// -----------------------------------------------------------------
-	// TERMINATE: CHECK IF CHAR == 'q' or CHAR == 'Q'
-	// -----------------------------------------------------------------
-    // LOWERCASE
-    CMP  W5, #'q'
+    // increment index
+    ADD X3, X3, #1
+
+    // -----------------------------------------------------------
+    // CHECK FOR TERMINATE ('q' or 'Q')
+    // -----------------------------------------------------------
+    CMP W5, #'q'
     B.EQ terminate
 
-    // UPPERCASE
     CMP W5, #'Q'
     B.EQ terminate
 
-	// -----------------------------------------------------------------
-	// CLEAR BINARY STRING: CHECK IF CHAR == 'c' or CHAR == 'C'
-	// -----------------------------------------------------------------
-    // LOWERCASE
-    CMP  W5, #'c'
+    // -----------------------------------------------------------
+    // CHECK FOR CLEAR ('c' or 'C')
+    // -----------------------------------------------------------
+    CMP W5, #'c'
     B.EQ clearBin
 
-    // UPPERCASE
     CMP W5, #'C'
     B.EQ clearBin
-	
-	// -----------------------------------------------------------------
-	// CHECK IF CHAR == 1 or CHAR == 0 - ENTER TO BINARY STRING
-	// -----------------------------------------------------------------
-    // 1
-    CMP  W5, #'1'
-    B.EQ addBin
 
-    // 0
-    CMP  W5, #'0'
-    B.EQ addBin
+    // -----------------------------------------------------------
+    // CHECK IF '1'
+    // -----------------------------------------------------------
+    CMP W5, #'1'
+    B.EQ addOne
 
-	// -----------------------------------------------------------------
-	// LOOP AGAIN: ELSE / DO NOTHING
-	// -----------------------------------------------------------------	
-	B forInString
+    // -----------------------------------------------------------
+    // CHECK IF '0'
+    // -----------------------------------------------------------
+    CMP W5, #'0'
+    B.EQ addZero
 
-	// -----------------------------------------------------------------
-	// 	CLEAR BINARY
-	//  X0: number of characters read
-	//	X1: input string 
-    //  X2: binary string
-    //  X3: input counter
-    //	X4: binary counter
-	//	X5 / W5: current input character
-    //  X6 / W6: current binary character
-	// -----------------------------------------------------------------
-clearBin:
-	// GET CURRENT CHARACTER
-	STRB W6, [X2, X4]	// W6 = binString[binCounter]
-
-	// EMPTY CHARACTER
-	MOV W6, #0			// W6 = 0 (cleared)
-
-	// -----------------------------------------------------------------
-	// RETURN TO MAIN LOOP: CHECK IF WE HAVE CLEARED ALL VALUES
-	// -----------------------------------------------------------------
-	CMP X4, #0			// binCounter == 0
-	B.EQ forInString
-	
-	// DECREMENT
-	SUB X4, X4, #1		// binCounter--
-
-	// LOOP AGAIN, KEEP CLEARING
-	B clearBin
-
-	// -----------------------------------------------------------------
-	// 	ADD BINARY - 1 OR 0 INPUT
-	//  X0: number of characters read
-	//	X1: input string 
-    //  X2: binary string
-    //  X3: input counter
-    //	X4: binary counter
-	//	X5 / W5: current input character
-    //  X6 / W6: current binary character
-	// -----------------------------------------------------------------
-addBin:
-	// -----------------------------------------------------------------
-	// EXIT: CHECK IF AT MAX - binCounter < 16
-	// -----------------------------------------------------------------
-    CMP X4, BIN_LEN - 1            // 15 because start at 0
-    B.EQ output
-
-	// -----------------------------------------------------------------
-    // NOT AT MAX, ADD TO STRING
-    // -----------------------------------------------------------------
-    // GET CURRENT CHARACTER 
-    MOV W6, W5          // binaryString[binaryCounter] = input[inCounter]
-
-    // SAVE INPUT TO BINARY STRING
-    STRB W6, [X2, X4] 	// X6 = binaryString[binaryCounter]
-    
-    // INCREMENT COUNTER
-    ADD X4, X4, #1
-
-    // JUMP BACK TO INPUT LOOP
+    // ignore all other characters
     B forInString
 
-	// -----------------------------------------------------------------
-	// OUTPUT BINARY
-	//  X0 <- X2: string to output
-	//	X1 <- X4: length of output
-	// -----------------------------------------------------------------
-output: 
-	// MAKE LAST INDEX OF BINARY STRING '0'
-	STRB WZR, [X2, X4]  // X0[16] = \0
-	
-	// OUTPUT BINARY
-	MOV X0, X2
-	MOV X1, BIN_LEN
-	BL putstring
+// ---------------------------------------------------------------
+// CLEAR BINARY (reset everything)
+// ---------------------------------------------------------------
+clearBin:
+    MOV X7, #0      // reset integer value
+    MOV X4, #0      // reset bit count
+    B forInString
 
-	// OUTPUT ARROW
-	LDR X0, =sArrow
-	MOV X1, #4
-	BL putstring
+// ---------------------------------------------------------------
+// ADD BIT = 1
+// ---------------------------------------------------------------
+addOne:
+    CMP X4, #16     // if already 16 bits, ignore
+    B.EQ forInString
 
-	// -----------------------------------------------------------------
-	// TERMINATE PROGRAM
-	// -----------------------------------------------------------------
+    LSL X7, X7, #1  // shift left
+    ORR X7, X7, #1  // add 1
+
+    ADD X4, X4, #1  // increment bit count
+    B forInString
+
+// ---------------------------------------------------------------
+// ADD BIT = 0
+// ---------------------------------------------------------------
+addZero:
+    CMP X4, #16
+    B.EQ forInString
+
+    LSL X7, X7, #1  // shift left (adds 0)
+
+    ADD X4, X4, #1
+    B forInString
+
+// ---------------------------------------------------------------
+// SIGN EXTEND (ONLY IF < 16 BITS)
+// ---------------------------------------------------------------
+signExtend:
+
+    // if exactly 16 bits → skip
+    CMP X4, #16
+    B.EQ buildString
+
+    // if 0 bits → skip
+    CMP X4, #0
+    B.EQ buildString
+
+    // shift amount = 16 - bit_count
+    MOV X6, #16
+    SUB X6, X6, X4
+
+    // sign extend using shift trick
+    LSL X7, X7, X6
+    ASR X7, X7, X6
+
+// ---------------------------------------------------------------
+// BUILD BINARY STRING (for display)
+// ---------------------------------------------------------------
+buildString:
+
+    MOV X3, #15     // index = last position
+    MOV X5, #16     // loop counter
+
+buildLoop:
+    CMP X5, #0
+    B.EQ doneBuild
+
+    // extract lowest bit
+    AND X6, X7, #1
+
+    // convert to ASCII
+    ADD W6, W6, #'0'
+
+    // store in buffer
+    STRB W6, [X2, X3]
+
+    // shift right
+    ASR X7, X7, #1
+
+    SUB X3, X3, #1
+    SUB X5, X5, #1
+    B buildLoop
+
+doneBuild:
+    // null terminate
+    STRB WZR, [X2, #16]
+
+// ---------------------------------------------------------------
+// OUTPUT
+// ---------------------------------------------------------------
+
+    // print binary string
+    MOV X0, X2
+    MOV X1, BIN_LEN
+    BL putstring
+
+    // print arrow
+    LDR X0, =sArrow
+    MOV X1, #4
+    BL putstring
+
+    // convert integer to string
+    MOV X0, X7
+    LDR X1, =szOutBuffer
+    BL int2cstr
+
+    // print decimal string
+    LDR X0, =szOutBuffer
+    MOV X1, #20
+    BL putstring
+
+// ---------------------------------------------------------------
+// TERMINATE PROGRAM
+// ---------------------------------------------------------------
 terminate:
-	MOV X0, #0			// set return code to 0, all good 
-	MOV X8, #SYS_exit	// set exit() supervisor call code 
-	SVC 0				// call Linux to exit 
+    MOV X0, #0
+    MOV X8, #SYS_exit
+    SVC 0
 
-	.data	// data section
-szInBuffer: 	.space 	IN_LEN		// holds user input, includes null
-szBinBuffer:	.space	BIN_LEN		// holds binary string, includes null
-sArrow:			.ascii 	" -> "
+// ---------------------------------------------------------------
+// DATA SECTION
+// ---------------------------------------------------------------
+.data
+szInBuffer:     .space IN_LEN
+szBinBuffer:    .space BIN_LEN
+szOutBuffer:    .space 32
 
-.end	// end of program, optional but good practice 
+sArrow:         .ascii " -> "
+
+.end
