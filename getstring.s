@@ -68,13 +68,6 @@ getstring:
     // RETURN TO MAIN - NO ISSUES
     // -----------------------------------------------------------------
 done:
-	MOV X4, X0
-
-	MOV X0, STDOUT		// tells program we will output
-	MOV X1, X3			// string to output
-	MOV X2, X4			// number of characters to output
-	MOV X8, SYS_write	// Linux write() sys call
-	SVC 0				// call Linux to execute commands
 	RET     // return to main
 
 .end	// end of program, optional but good practice 

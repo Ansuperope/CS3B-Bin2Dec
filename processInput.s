@@ -102,13 +102,13 @@ forInString:
     // CHECK IF '1'
     // -----------------------------------------------------------------
     CMP W5, #'1'
-    B.EQ addBit
+    B.EQ addBit1
 
     // -----------------------------------------------------------------
     // CHECK IF '0'
     // -----------------------------------------------------------------
     CMP W5, #'0'
-    B.EQ addBit
+    B.EQ addBit0
 
     // ignore all other characters
     B forInString
@@ -132,7 +132,7 @@ clearBin:
 // ---------------------------------------------------------------
 // ADD BIT = 1
 // ---------------------------------------------------------------
-addBit:
+addBit1:
     CMP X4, BIN_LEN     // if already 16 bits, ignore
     B.EQ forInString
 
@@ -140,6 +140,18 @@ addBit:
     ORR X7, X7, #1  // add 1
 
     ADD X4, X4, #1  // increment bit count
+    B forInString
+
+// ---------------------------------------------------------------
+// ADD BIT = 0
+// ---------------------------------------------------------------
+addBit0:
+    CMP X4, BIN_LEN     // if already 16 bits, ignore
+    B.EQ forInString
+
+    LSL X7, X7, #1      // shift left, add 0
+
+    ADD X4, X4, #1      // increment bit count
     B forInString
 
 // ---------------------------------------------------------------
@@ -167,6 +179,5 @@ signExtend:
 done: 
     MOV X0, X7
     RET
-
 
 .end

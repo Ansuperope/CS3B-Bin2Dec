@@ -32,91 +32,42 @@ int2cstr:
     .text
 
     // -----------------------------------------------------------------
-    // INITIALIZATION
+    // CONVERT BINARY NUMBER TO 16-BIT BINARY STRING
+    // X0: binary number (16-bit, sign-extended)
+    // X1: output buffer pointer
+    // Returns: X0 = pointer to output buffer
+    // Output format: "XXXXXXXXXXXXXXXX\0" (16 bits, no spaces)
     // -----------------------------------------------------------------
-    MOV X5, #0          // index = 0
-    MOV X6, #10         // divisor = 10
-    MOV X2, #0          // sign flag (0 = positive, 1 = negative)
-
-    // -----------------------------------------------------------------
-    // STEP 1 - CHECK IF POS OR NEG
-    // -----------------------------------------------------------------
-    CMP X0, #0
-    B.GE digitLoop      // if >= 0 → skip
-
-    // number is negative
-    MOV X2, #1          // mark negative
-    NEG X0, X0          // make positive
+    MOV X5, #0          // output character index
+    MOV X6, #15         // start from bit 15 (MSB)
 
     // -----------------------------------------------------------------
-    // STEP 2 - EXTRACT DIGITS
+    // STEP 1 - OUTPUT ALL 16 BITS WITH SPACES EVERY 4 BITS
     // -----------------------------------------------------------------
-digitLoop:
+bitLoop:
+    // Extract the bit at position X6
+    LSR X3, X0, X6      // shift right by bit position
+    AND X3, X3, #1      // mask to get only that bit
 
-    // quotient = number / 10
-    UDIV X3, X0, X6
-
-    // remainder = number - (quotient * 10)
-    MUL X4, X3, X6
-    SUB X4, X0, X4
-
-    // convert remainder to ASCII
-    ADD X4, X4, #'0'
-
-    // store digit (backwards)
-    STRB W4, [X1, X5]
-
-    // update number
-    MOV X0, X3
-
-    // increment index
+    // convert bit to ASCII '0' or '1'
+    ADD X3, X3, #'0'
+    STRB W3, [X1, X5]
     ADD X5, X5, #1
 
-    // loop until number == 0
-    CMP X0, #0
-    B.NE digitLoop
+    // move to next bit
+    SUB X6, X6, #1
+
+    // Continue loop
+    CMP X6, #-1
+    B.NE bitLoop
+    B addNull
 
     // -----------------------------------------------------------------
-    // STEP 3 - ADD NEGATIVE SIGN (if needed)
-    // -----------------------------------------------------------------
-    CMP X2, #1
-    B.NE addNull
-
-    MOV W4, #'-'
-    STRB W4, [X1, X5]
-    ADD X5, X5, #1
-
-    // -----------------------------------------------------------------
-    // STEP 4 - ADD NULL TERMINATOR
+    // STEP 2 - ADD NULL TERMINATOR
     // -----------------------------------------------------------------
 addNull:
-    MOV W6, #0
-    STRB W6, [X1, X5]
-
-    // -----------------------------------------------------------------
-    // STEP 5 - REVERSE STRING
-    // -----------------------------------------------------------------
-    MOV X6, #0          // left index
-    SUB X7, X5, #1      // right index (before null)
-
-reverseLoop:
-
-    CMP X6, X7
-    B.GE done
-
-    // load left and right chars
-    LDRB W3, [X1, X6]
-    LDRB W4, [X1, X7]
-
-    // swap
-    STRB W4, [X1, X6]
-    STRB W3, [X1, X7]
-
-    // move indices
-    ADD X6, X6, #1
-    SUB X7, X7, #1
-
-    B reverseLoop
+    MOV W3, #0
+    STRB W3, [X1, X5]
 
     // -----------------------------------------------------------------
     // DONE
