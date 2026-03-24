@@ -29,16 +29,31 @@ putstring:
 
     // RECEIVE AND SAVE VARAIBLES FROM MAIN
     MOV X3, X0      // string to output
-    MOV X4, X1      // length of string
+    MOV X4, LR	    // save the return in x3 so it doesnt get overwritten
+
+    // -----------------------------------------------------------------
+    // GET STRING LENGTH
+    // -----------------------------------------------------------------
+	BL String_length	// call the String_length function 
+	MOV X2, X0	        // save the length from x0
 
     // -----------------------------------------------------------------
     // OUTPUT
+    //  X0: file descriptor
+    //  X1: string to output (X3, from main)
+    //  X2: length (received from String_length)
+    //  X8: system call
     // -----------------------------------------------------------------
     MOV X0, STDOUT			// tells program we will output
 	MOV X1, X3	            // string to output
-	MOV X2, X4			    // number of characters to output
+		        		    // number of characters to output - already set
 	MOV X8, SYS_write		// Linux write() sys call
 	SVC 0					// call Linux to execute commands
 
+    // -----------------------------------------------------------------
+    // RETURN TO MAIN
+    // -----------------------------------------------------------------
+    MOV LR, X4 	    // get return and put it back into LR
     RET
+
 .end	// end of program, optional but good practice 

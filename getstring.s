@@ -53,16 +53,21 @@ getstring:
 	MOV X8, SYS_read 	// Linux read() system call number 
 	SVC 0				// call Linux to execute commands
 
-	// If input not valid exit (overflow)
-	CMP  X0, XZR
-	B.GE done     // jump if valid
-
 	// -----------------------------------------------------------------
 	// ERROR: TERMINATE PROGRAM
 	// -----------------------------------------------------------------
+	CMP  X0, XZR
+	B.GE done     		// jump if valid
+
+	// INVALID - EXIT
 	MOV X0, #1			// set return code to 0, all good 
 	MOV X8, #SYS_exit	// set exit() supervisor call code 
-	SVC 0				// call Linux to exit 
+	SVC 0				// call Linux to exit
+
+	// -----------------------------------------------------------------
+	// REMOVE NULL
+	// -----------------------------------------------------------------
+	STRB WZR, [X3, X0]  // X0[numCharsRead] = \0
 
     // -----------------------------------------------------------------
     // RETURN TO MAIN - NO ISSUES
