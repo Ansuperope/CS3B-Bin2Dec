@@ -37,7 +37,7 @@
 .extern processInput
 .extern putstring
 .extern int2cstr
-.extern toDec
+.extern cstr2int
 .extern two_check
 
 _start:
@@ -80,13 +80,23 @@ _start:
 	MOV X0, X9
 	BL  processInput
 
-    // CHECK IF DO 2S COMPLEMENT
-    CMP X0, #0
+    // SAVE SIGN VARIABLE TO USE FOR LATER
+    MOV X4, X0
+
+    // -----------------------------------------------------------------
+    // CHECK IF WE DO 2S COMPLEMENT 
+	// 	X0: string to output
+    // RETURN:
+    // 	nothing
+    // -----------------------------------------------------------------
+    CMP X4, #0      // check if positive
     B.EQ notNeg
 
+    // DO 2S COMPLEMENT, NUM IS NEG
+    // pass sign to it
+    BL two_check
+
 notNeg:
-
-
     // -----------------------------------------------------------------
     // 3. OUTPUT BINARY STRING 
     // 	X0: binary string (int)
@@ -107,6 +117,22 @@ notNeg:
     BL putstring
 
     // -----------------------------------------------------------------
+    // OUTPUT DECIMAL
+	//	X0: passing binary string 
+    // -----------------------------------------------------------------
+    // PASS NEGATIVE SIGN
+    CMP X4, #1
+    B   printPos
+
+    LDR X0, =sNegSign
+    BL  putstring
+    B   terminate
+
+    // PASS POSITIVE SIGN
+printPos:
+	LDR X0, =sPosSign
+    BL  putstring
+
     // -----------------------------------------------------------------
     // CONVERT SIGN BIT TO DECIMAL STRING
 	//	X0: sign bit value (0/1)
@@ -114,24 +140,21 @@ notNeg:
 	// RETURN:
 	//	X0: string to save to 
     // -----------------------------------------------------------------
-	MOV X0, X10
-	LDR X1, =szBinBuffer
-	BL toDec
-
-	// -----------------------------------------------------------------
-    // OUTPUT BINARY STRING 
-    // 	X0: binary string (int)
-    // RETURN:
-    // 	X0: binary string 
-    // -----------------------------------------------------------------
+    // CONVERT BIN STRING TO AN INT
     LDR X0, =szBinBuffer
-    BL  putstring
+    BL  cstr2int
+
+    // CONVERT BIN INT TO DEC
+
+    // OUTPUT CONVERT INT 
+	LDR X1, =szStrBuffer
+	BL int2cstr
 
     // -----------------------------------------------------------------
     // OUTPUT DECIMAL
 	//	X0: passing binary string 
     // -----------------------------------------------------------------
-	LDR X0, =szBinBuffer
+	LDR X0, =szStrBuffer 
     BL putstring
 
     // -----------------------------------------------------------------
@@ -148,6 +171,10 @@ terminate:
     .data
 szInBuffer:     .space IN_LEN
 szBinBuffer:    .space BIN_LEN
+szStrBuffer:    .space 24
+
 sArrow:         .ascii " -> "
+sPosSign:       .ascii "+"
+sNegSign:       .ascii "-"
 
 .end
