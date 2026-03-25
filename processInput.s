@@ -132,6 +132,7 @@ clearBin:
     //	X4: binary counter
 	//	X5 / W5: current input character
     //  X6 / W6: current binary character
+    //  X7: last bit, sign
 	// -----------------------------------------------------------------
 addBin:
 	// -----------------------------------------------------------------
@@ -148,6 +149,7 @@ addBin:
 
     // SAVE INPUT TO BINARY STRING
     STRB W6, [X2, X4] 	// X6 = binaryString[binaryCounter]
+    SUB  W7, W6, #'0'
     
     // INCREMENT COUNTER
     ADD X4, X4, #1
@@ -165,7 +167,7 @@ done:
     MOV W6, #0
     STRB W6, [X2, X4]
 
-    MOV X0, X2
+    MOV X0, X7
     RET
 
 .end

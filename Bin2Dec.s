@@ -72,25 +72,26 @@ _start:
     // 	X1: buffer pointer (input)
     //  X2: buffer pointer to binary string
     // RETURN:
-    // 	X0: pointer to binary string
-    //  X1: last/sign bit (0 or 1)
+    // 	X0: last/sign bit (0 or 1)
+    //  X1: 
     // -----------------------------------------------------------------
     MOV X9, X0
 	LDR X1, =szInBuffer
     LDR X2, =szBinBuffer
 	MOV X0, X9
 	BL  processInput
-	MOV X2, X0      // keep binary string pointer
-	MOV X10, X1     // keep sign bit
+
+    // SAVE VARIABLES 
+	MOV X2, X19      // keep binary string pointer
 
     // -----------------------------------------------------------------
     // 3. OUTPUT BINARY STRING 
     // 	X0: binary string (int)
-    //  X1: string to save binary to
     // RETURN:
-    // 	X0: binary string 
+    // 	nothing
     // -----------------------------------------------------------------
     // putstring reads pointer from X0
+    LDR X0, =szBinBuffer
     BL putstring
 
     // -----------------------------------------------------------------
@@ -99,6 +100,8 @@ _start:
     // RETURN:
     // 	nothing
     // -----------------------------------------------------------------
+    CMP X19, #0
+    B.EQ notNeg
     LDR X0, =sArrow
     BL putstring
 
@@ -110,6 +113,7 @@ _start:
 	// RETURN:
 	//	X0: string to save to 
     // -----------------------------------------------------------------
+notNeg:
 	MOV X0, X10
 	LDR X1, =szBinBuffer
 	BL toDec
