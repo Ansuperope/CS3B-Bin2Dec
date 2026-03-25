@@ -167,7 +167,33 @@ done:
     MOV W6, #0
     STRB W6, [X2, X4]
 
-    MOV X0, X7
+    // -----------------------------------------------------------------
+    // REVERSE STRING IN-PLACE
+    // -----------------------------------------------------------------
+    MOV X8, X2          // X8 = base pointer to string
+    MOV X1, #0          // left index
+    SUB X2, X4, #1      // right index = last char
+
+reverseLoop:
+    CMP X1, X2
+    B.GE reverseDone
+
+    LDRB W3, [X8, X1]   // left char
+    LDRB W4, [X8, X2]   // right char
+
+    STRB W4, [X8, X1]   // left = right
+    STRB W3, [X8, X2]   // right = left
+
+    ADD X1, X1, #1
+    SUB X2, X2, #1
+    B reverseLoop
+
+reverseDone:
+    // -----------------------------------------------------------------
+    // RETURN TO MAIN
+    // -----------------------------------------------------------------
+    MOV X0, X8          // pointer to string
+    MOV X1, X7          // last bit entered
     RET
 
 .end

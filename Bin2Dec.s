@@ -83,6 +83,11 @@ _start:
 
     // SAVE VARIABLES 
 	MOV X2, X19      // keep binary string pointer
+    CMP X19, #0
+    B.EQ notNeg
+
+notNeg:
+
 
     // -----------------------------------------------------------------
     // 3. OUTPUT BINARY STRING 
@@ -100,8 +105,6 @@ _start:
     // RETURN:
     // 	nothing
     // -----------------------------------------------------------------
-    CMP X19, #0
-    B.EQ notNeg
     LDR X0, =sArrow
     BL putstring
 
@@ -113,7 +116,6 @@ _start:
 	// RETURN:
 	//	X0: string to save to 
     // -----------------------------------------------------------------
-notNeg:
 	MOV X0, X10
 	LDR X1, =szBinBuffer
 	BL toDec
