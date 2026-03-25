@@ -192,8 +192,7 @@ reverseDone:
     // -----------------------------------------------------------------
     // RETURN TO MAIN
     // -----------------------------------------------------------------
-    MOV X0, X8          // pointer to string
-    MOV X1, X7          // last bit entered
+    MOV X0, X7          // last bit entered / sign bit
     RET
 
 .end

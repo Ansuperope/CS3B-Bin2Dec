@@ -73,7 +73,6 @@ _start:
     //  X2: buffer pointer to binary string
     // RETURN:
     // 	X0: last/sign bit (0 or 1)
-    //  X1: 
     // -----------------------------------------------------------------
     MOV X9, X0
 	LDR X1, =szInBuffer
@@ -81,9 +80,8 @@ _start:
 	MOV X0, X9
 	BL  processInput
 
-    // SAVE VARIABLES 
-	MOV X2, X19      // keep binary string pointer
-    CMP X19, #0
+    // CHECK IF DO 2S COMPLEMENT
+    CMP X0, #0
     B.EQ notNeg
 
 notNeg:
