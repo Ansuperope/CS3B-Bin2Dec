@@ -38,6 +38,7 @@
 .extern putstring
 .extern int2cstr
 .extern toDec
+.extern two_check
 
 _start:
     // ---------------------------------------------------------------
@@ -65,38 +66,31 @@ _start:
     MOV X1, IN_LEN
     BL  getstring
 
-inputReady:
 	// -----------------------------------------------------------------
-    // 2. PROCESS USER INPUT - CREATE BINARY NUMBER
+    // 2. PROCESS USER INPUT - CREATE BINARY NUMBER STRING
     // 	X0: number of characters read
     // 	X1: buffer pointer (input)
-    // RETURN:
-    // 	X0 -> X4: binary number (integer)
-    // -----------------------------------------------------------------
-    MOV X0, X2
-	LDR X1, =szInBuffer
-	BL  processInput
-	MOV X2, X0
-
-	// -----------------------------------------------------------------
-    // 3. CONVERT BINARY NUMBER TO BINARY STRING
-    // 	X0: binary number
-    // 	X1: string to save binary to
+    //  X2: buffer pointer to binary string
     // RETURN:
     // 	X0: pointer to binary string
+    //  X1: last/sign bit (0 or 1)
     // -----------------------------------------------------------------
-	MOV X0, X2
+    MOV X9, X0
 	LDR X1, =szInBuffer
-	BL int2cstr
+    LDR X2, =szBinBuffer
+	MOV X0, X9
+	BL  processInput
+	MOV X2, X0      // keep binary string pointer
+	MOV X10, X1     // keep sign bit
 
-	// -----------------------------------------------------------------
-    // OUTPUT BINARY STRING 
+    // -----------------------------------------------------------------
+    // 3. OUTPUT BINARY STRING 
     // 	X0: binary string (int)
     //  X1: string to save binary to
     // RETURN:
     // 	X0: binary string 
     // -----------------------------------------------------------------
-	MOV X1, BIN_LEN
+    // putstring reads pointer from X0
     BL putstring
 
     // -----------------------------------------------------------------
@@ -109,22 +103,25 @@ inputReady:
     BL putstring
 
     // -----------------------------------------------------------------
-    // DO 2S COMPLEMENT (IF NEG)
-	// 	X0: string to output
-    // RETURN:
-    // 	nothing
     // -----------------------------------------------------------------
-
-	// -----------------------------------------------------------------
-    // CONVERTING BINARY TO DECIMAL
-	//	X0: passing binary number
-	//	X1: register to save to
+    // CONVERT SIGN BIT TO DECIMAL STRING
+	//	X0: sign bit value (0/1)
+	//	X1: output string buffer
 	// RETURN:
 	//	X0: string to save to 
     // -----------------------------------------------------------------
-	MOV X0, X2
+	MOV X0, X10
 	LDR X1, =szBinBuffer
 	BL toDec
+
+	// -----------------------------------------------------------------
+    // OUTPUT BINARY STRING 
+    // 	X0: binary string (int)
+    // RETURN:
+    // 	X0: binary string 
+    // -----------------------------------------------------------------
+    LDR X0, =szBinBuffer
+    BL  putstring
 
     // -----------------------------------------------------------------
     // OUTPUT DECIMAL
